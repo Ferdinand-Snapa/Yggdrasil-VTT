@@ -1,6 +1,23 @@
 @import './base.css';
 @import "tailwindcss";
 
+.animated-grad {
+  -webkit-animation: anim 3s ease infinite;
+  -moz-animation: anim 3s ease infinite;
+  animation: anim 3s ease infinite;
+}
+
+@keyframes anim {
+  0%,100% {
+    stroke-color: rgba(255, 0, 0)
+
+  }
+
+  50% {
+    stroke-color: rgba(0, 255, 0)
+  }
+}
+
 #app {
   margin: 0 auto;
   padding: 2rem;

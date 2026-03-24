@@ -77,7 +77,7 @@ function flowPort( id:string, name: string): FlowPort {
   return {id, name ,kind: "flow"}
 }
 
-interface Node {
+export interface Node {
   id: NodeId
   type: string
   position: { x: number; y: number }
@@ -412,67 +412,52 @@ async function runGraph(
   console.log(ctx.callHistory)
 }
 
-export const useFlowStore = defineStore("flow", {
-  state: () => ({
-    graphs: {} as Record<GraphId, Graph>,
-    activeGraphId: null as GraphId | null
-  }),
-
-  getters: {
-    activeGraph(state): Graph | null {
-      if (!state.activeGraphId) return null
-      return state.graphs[state.activeGraphId]!
-    }
-  },
-
-  actions: {
-    createGraph(name: string): GraphId {
-      const id = crypto.randomUUID()
-
-      this.graphs[id] = {
-        id,
-        name,
-        nodes: {},
-        connections: [],
-        entryNodeId: undefined,
-        inputPorts: [],
-        outputPorts: []
-      }
-
-      this.activeGraphId = id
-      return id
-    },
-    setActiveGraph(id: GraphId) {
-      if (this.graphs[id]) {
-        this.activeGraphId = id
-      }
-    },
-    deleatGraph(id: GraphId) {
-      delete this.graphs[id]
-
-      if (this.activeGraphId === id) {
-        this.activeGraphId = null
-      }
-    },
-    addNode(node: Node) {
-      if (!this.activeGraph) return
-      this.activeGraph.nodes[node.id] = node
-    },
-    connect(conenction : Connection) {
-      if (!this.activeGraph) return
-      this.activeGraph.connections.push(conenction)
-    },
-    removeConnection(index: number) {
-      if (!this.activeGraph) return
-      this.activeGraph.connections.splice(index, 1)
-    },
-    setEntryNode(nodeId: string) {
-      if (!this.activeGraph) return
-      this.activeGraph.entryNodeId = nodeId
-    },
-    runCurrentGraph() {
-      if (!this.activeGraph) return
-      runGraph(this.activeGraph, this.activeGraph.entryNodeId!)
-    }
+const createGraph = (name: string): Graph => {
+  return {
+    id: crypto.randomUUID(),
+    name,
+    nodes: {},
+    connections: [],
+    entryNodeId: undefined,
+    inputPorts: [],
+    outputPorts: []
   }
-})
+}
+
+export const useGraphStore = (graphName : string) => {
+  let store = defineStore((graphName), {
+    state: () => ({
+      graph: createGraph(graphName)
+    }),
+
+    getters: {
+      getNode: (state) => {
+        return (nodeId: string) => state.graph.nodes[nodeId]
+      }
+    },
+
+    actions: {
+      addNode(node: Node) {
+        this.graph.nodes[node.id] = node
+      },
+      connect(conenction : Connection) {
+        //TODO: return erro on faulty connections
+        this.graph.connections.push(conenction)
+      },
+      removeConnection(index: number) {
+        this.graph.connections.splice(index, 1)
+      },
+      setEntryNode(nodeId: string) {
+        this.graph.entryNodeId = nodeId
+      },
+      runCurrentGraph() {
+        runGraph(this.graph, this.graph.entryNodeId!)
+      },
+      setNodePosition(nodeId: string, position: { x: number, y: number }){
+        this.graph.nodes[nodeId]!.position = position
+      }
+    }
+  })
+  return store()
+}
+

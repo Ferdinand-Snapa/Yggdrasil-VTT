@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import TheWelcome from '../components/TheWelcome.vue'
-import { useFlowStore } from '@/stores/codeGraph';
+import { useGraphStore } from '@/stores/codeGraph';
 
-const graphStore = useFlowStore()
-graphStore.createGraph("test Graph")
+const graphStore = useGraphStore("testGraphHome")
 
 graphStore.addNode({
   id: "start node of test graph",

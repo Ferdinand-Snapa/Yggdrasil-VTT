@@ -54,13 +54,17 @@ onMounted(() => {
       drawCorners.set(3, { point1: hex.corners[2]!, point2: hex.corners[3]! })
   }
 })
+
+const logNode = (nodeName: string) => {
+  console.log(`pressed: ${nodeName}`)
+}
 </script>
 
 <template>
   <!--Hexagon side = a = hexSize | width = s = a * 1.732 | height = d = a * 2-->
   <div
     :id="`${node.id}`"
-    class="absolute shadow cursor-pointer flex-row items-center justify-center pt-6 pb-18"
+    class="absolute shadow cursor-pointer flex-row items-center justify-center pt-6 pb-18 pointer-events-auto"
     :style="`width: ${hexSize * gridWidth * 1.732}px; height: ${hexSize * gridHeight * 2}px`"
   >
     <div class="z-10 relative text-center">{{ node.type.toUpperCase() }}</div>
@@ -68,7 +72,10 @@ onMounted(() => {
       <!--Input-->
       <div class="flex-1 flex flex-col">
         <div class="flex-row flex gap-2" v-for="input in inputPorts" v-bind:key="input.id">
-          <div class="w-3 h-3 rounded-full bg-white border cursor-pointer self-center"></div>
+          <div
+            @pointerdown.stop="logNode(input.name)"
+            class="w-3 h-3 rounded-full bg-white border cursor-pointer self-center z-15"
+          ></div>
           <div>{{ input.name }}</div>
         </div>
       </div>
@@ -77,7 +84,10 @@ onMounted(() => {
       <div class="flex-1 flex flex-col items-end">
         <div class="flex-row flex gap-2" v-for="output in outputPorts" v-bind:key="output.id">
           <div>{{ output.name }}</div>
-          <div class="w-3 h-3 rounded-full bg-black border cursor-pointer self-center"></div>
+          <div
+            @pointerdown.stop="logNode(output.name)"
+            class="w-3 h-3 rounded-full bg-black border cursor-pointer self-center z-15"
+          ></div>
         </div>
       </div>
     </div>

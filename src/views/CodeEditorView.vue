@@ -66,6 +66,7 @@ let draggingNodeId: string | null = null
 const dragOffset = { x: 0, y: 0 }
 
 function onNodeDragStart(e: PointerEvent, nodeId: string) {
+  console.log('startign to drag node: ' + nodeId)
   draggingNodeId = nodeId
 
   const rect = (e.target as HTMLElement).getBoundingClientRect()
@@ -210,7 +211,11 @@ const maskStyle = computed(() => ({
       :style="canvasStyle"
       id="maskingLayer"
     >
-      <div v-for="node in graphStore.graph.nodes" :key="node.id" class="z-10 inset-0 absolute">
+      <div
+        v-for="node in graphStore.graph.nodes"
+        :key="node.id"
+        class="z-10 inset-0 absolute pointer-events-none select-none"
+      >
         <HexNode
           :key="node.id"
           :node="node"

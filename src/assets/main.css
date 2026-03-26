@@ -1,5 +1,5 @@
 @import './base.css';
-@import "tailwindcss";
+@import 'tailwindcss';
 
 .animated-grad {
   -webkit-animation: anim 3s ease infinite;
@@ -8,13 +8,13 @@
 }
 
 @keyframes anim {
-  0%,100% {
-    stroke-color: rgba(255, 0, 0)
-
+  0%,
+  100% {
+    stroke-color: rgba(255, 0, 0);
   }
 
   50% {
-    stroke-color: rgba(0, 255, 0)
+    stroke-color: rgba(0, 255, 0);
   }
 }
 

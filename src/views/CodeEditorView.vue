@@ -51,8 +51,35 @@ graphStore.addNode({
 graphStore.addNode({
   id: 'print test',
   type: 'log',
-  position: { x: 100, y: 100 },
+  position: { x: 173 * 2, y: 0 },
 })
+
+graphStore.addNode({
+  id: 'const Node 1',
+  type: 'constNumber',
+  position: { x: 0, y: 300 },
+  state: {
+    value: 5,
+  },
+})
+
+graphStore.connect({
+  fromNode: 'start node of test graph',
+  fromPort: 'next',
+  toNode: 'print test',
+  toPort: 'fire',
+})
+
+graphStore.connect({
+  fromNode: 'const Node 1',
+  fromPort: 'const',
+  toNode: 'print test',
+  toPort: 'value',
+})
+
+graphStore.setEntryNode('start node of test graph')
+
+graphStore.runCurrentGraph()
 
 const scale = ref(1)
 const offset = reactive({ x: 0, y: 0 })
@@ -171,6 +198,48 @@ const maskStyle = computed(() => ({
     transparent 100%
   )`,
 }))
+
+const portPositions = ref({} as Record<string, { x: number; y: number }>)
+//const portPositions = new Map<string, { x: number; y: number }>()
+
+function registerPort(element: HTMLElement, nodeId: string, portId: string) {
+  const rect = element.getBoundingClientRect()
+  const viewportRect = document.getElementById('viewport')!.getBoundingClientRect()
+  portPositions.value[`${nodeId}:${portId}`] = {
+    x: rect.left + rect.width / 2 - viewportRect.left,
+    y: rect.top + rect.height / 2 - viewportRect.top,
+  }
+}
+
+function getBezierPath(x1: number, y1: number, x2: number, y2: number): string {
+  const dx = Math.abs(x2 - x1)
+
+  const offset = Math.max(50, dx * 0.5)
+
+  const cx1 = x1 + offset
+  const cy1 = y1
+
+  const cx2 = x2 - offset
+  const cy2 = y2
+
+  return `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`
+}
+
+function getPortX(
+  nodeId: string,
+  portId: string,
+  record: Record<string, { x: number; y: number }>,
+): number {
+  return record[`${nodeId}:${portId}`]?.x ?? 0
+}
+
+function getPortY(
+  nodeId: string,
+  portId: string,
+  record: Record<string, { x: number; y: number }>,
+): number {
+  return record[`${nodeId}:${portId}`]?.y ?? 0
+}
 </script>
 
 <style lang="css">
@@ -198,6 +267,7 @@ const maskStyle = computed(() => ({
   <div>Code editor</div>
   <div
     ref="viewport"
+    id="viewport"
     class="outline-amber-300 w-full h-screen outline-2 relative overflow-hidden cursor-grab"
     @pointerdown="onPanStart"
     @pointermove="onPanMove"
@@ -211,6 +281,7 @@ const maskStyle = computed(() => ({
       :style="canvasStyle"
       id="maskingLayer"
     >
+      <!--Nodes-->
       <div
         v-for="node in graphStore.graph.nodes"
         :key="node.id"
@@ -222,10 +293,29 @@ const maskStyle = computed(() => ({
           :hex-size="hexSize"
           :input-ports="NodeRegestry[node.type]?.inputs!"
           :output-ports="NodeRegestry[node.type]?.outputs!"
+          :register-node-position="registerPort"
           :style="{ transform: `translate(${node.position.x}px, ${node.position.y}px)` }"
           @pointerdown.stop="onNodeDragStart($event, node.id)"
         />
       </div>
+      <!--Connections-->
+      <svg class="z-15 absolute inset-0 pointer-events-none w-screen h-screen">
+        <path
+          v-for="(connection, index) in graphStore.graph.connections"
+          :key="index"
+          :d="
+            getBezierPath(
+              getPortX(connection.fromNode, connection.fromPort, portPositions),
+              getPortY(connection.fromNode, connection.fromPort, portPositions),
+              getPortX(connection.toNode, connection.toPort, portPositions),
+              getPortY(connection.toNode, connection.toPort, portPositions),
+            )
+          "
+          fill="none"
+          stroke="green"
+          stroke-width="4"
+        ></path>
+      </svg>
 
       <div
         class="absolute inset-0 h-screen w-screen transition-[mask-position] duration-75 grad-color z-5"

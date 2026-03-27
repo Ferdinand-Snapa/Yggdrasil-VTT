@@ -10,6 +10,7 @@ const props = defineProps<{
   hexSize: number
   inputPorts: PortDefenition[]
   outputPorts: PortDefenition[]
+  registerNodePosition: (element: HTMLElement, nodeId: string, portId: string) => void
 }>()
 
 interface HexCorner {
@@ -53,6 +54,15 @@ onMounted(() => {
     if (hex.row == gridHeight - 1 && hex.col == 0)
       drawCorners.set(3, { point1: hex.corners[2]!, point2: hex.corners[3]! })
   }
+
+  props.inputPorts.forEach((port) => {
+    props.registerNodePosition(document.getElementById(`${port.id}port`)!, props.node.id, port.id)
+    console.log('registerNode: ' + port.id)
+  })
+  props.outputPorts.forEach((port) => {
+    console.log('registerNode: ' + port.id)
+    props.registerNodePosition(document.getElementById(`${port.id}port`)!, props.node.id, port.id)
+  })
 })
 
 const logNode = (nodeName: string) => {
@@ -74,6 +84,7 @@ const logNode = (nodeName: string) => {
         <div class="flex-row flex gap-2" v-for="input in inputPorts" v-bind:key="input.id">
           <div
             @pointerdown.stop="logNode(input.name)"
+            :id="`${input.id}port`"
             class="w-3 h-3 rounded-full bg-white border cursor-pointer self-center z-15"
           ></div>
           <div>{{ input.name }}</div>
@@ -86,6 +97,7 @@ const logNode = (nodeName: string) => {
           <div>{{ output.name }}</div>
           <div
             @pointerdown.stop="logNode(output.name)"
+            :id="`${output.id}port`"
             class="w-3 h-3 rounded-full bg-black border cursor-pointer self-center z-15"
           ></div>
         </div>

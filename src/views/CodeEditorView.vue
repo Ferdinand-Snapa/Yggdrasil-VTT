@@ -41,6 +41,63 @@ onMounted(() => {
   }
 })
 
+function pixelToHex(x: number, y: number, size: number) {
+  const q = ((Math.sqrt(3) / 3) * x - (1 / 3) * y) / size
+  const r = ((2 / 3) * y) / size
+  return { q, r }
+}
+
+function axialToCube(q: number, r: number) {
+  return { x: q, z: r, y: -q - r }
+}
+
+function cubeRound(x: number, y: number, z: number) {
+  let rx = Math.round(x)
+  let ry = Math.round(y)
+  let rz = Math.round(z)
+
+  const xDiff = Math.abs(rx - x)
+  const yDiff = Math.abs(ry - y)
+  const zDiff = Math.abs(rz - z)
+
+  if (xDiff > yDiff && xDiff > zDiff) {
+    rx = -ry - rz
+  } else if (yDiff > zDiff) {
+    ry = -rx - rz
+  } else {
+    rz = -rx - ry
+  }
+
+  return { x: rx, y: ry, z: rz }
+}
+
+function cubeToAxial(x: number, y: number, z: number) {
+  return { q: x, r: z }
+}
+
+function hexToPixel(q: number, r: number, size: number) {
+  const x = size * Math.sqrt(3) * (q + r / 2)
+  const y = ((size * 3) / 2) * r
+  return { x, y }
+}
+
+function getClosestHexCenter(x: number, y: number, size: number) {
+  // 1. pixel → axial
+  const fractional = pixelToHex(x, y, size)
+
+  // 2. axial → cube
+  const cube = axialToCube(fractional.q, fractional.r)
+
+  // 3. round cube
+  const rounded = cubeRound(cube.x, cube.y, cube.z)
+
+  // 4. cube → axial
+  const axial = cubeToAxial(rounded.x, rounded.y, rounded.z)
+
+  // 5. axial → pixel
+  return hexToPixel(axial.q, axial.r, size)
+}
+
 const graphStore = useGraphStore('TestGraph')
 
 graphStore.addNode({
@@ -125,10 +182,12 @@ function onNodeDragEnd() {
       y: number
     }
 
-    graphStore.setNodePosition(draggingNodeId, {
-      x: nodePos.x - (nodePos.x % (hexSize / 2)),
-      y: nodePos.y - (nodePos.y % (hexSize / 2)),
-    })
+    const snapPosition: { x: number; y: number } = getClosestHexCenter(
+      nodePos.x,
+      nodePos.y,
+      hexSize,
+    )
+    graphStore.setNodePosition(draggingNodeId, snapPosition)
   }
   draggingNodeId = null
   window.removeEventListener('pointermove', onNodeDragMove)
@@ -332,7 +391,12 @@ function openContextMenu(e: PointerEvent) {
         test="testString props"
         :new-node="
           (type: string) => {
-            graphStore.addNodeType(type, contextOpenPosition)
+            const closestHex: { x: number; y: number } = getClosestHexCenter(
+              contextOpenPosition.x,
+              contextOpenPosition.y,
+              hexSize,
+            )
+            graphStore.addNodeType(type, closestHex)
           }
         "
       />

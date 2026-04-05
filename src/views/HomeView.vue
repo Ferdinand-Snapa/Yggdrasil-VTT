@@ -1,100 +1,42 @@
 <script setup lang="ts">
-import TheWelcome from '../components/TheWelcome.vue'
-import { useGraphStore } from '@/stores/codeGraph';
+import { useTemplateStore, newDecleration } from '@/stores/templateStore';
 
-const graphStore = useGraphStore("testGraphHome")
+const templateStore = useTemplateStore()
 
-graphStore.addNode({
-  id: "start node of test graph",
-  type: "start",
-  position: {x:0,y:0},
-})
+const temp1: string = templateStore.newTemplate("test Template 1").id
+const temp2: string = templateStore.newTemplate("test Template 2").id
+const temp3: string = templateStore.newTemplate("test Template 3").id
 
-graphStore.addNode({
-  id:"print Node",
-  type: "log",
-  position: {x:0,y:0}
-})
+templateStore.selectTemplate(temp1)
+templateStore.setDerive(temp2)
+templateStore.setDerive(temp3)
+templateStore.setDerive(temp3, temp2)
 
-graphStore.addNode({
-  id:"multiply Node",
-  type: "mult",
-  position: {x:0,y:0}
-})
+templateStore.addDecleration(newDecleration("template 1 Declare 1", "String"))
+templateStore.addDecleration(newDecleration("template 1 Declare 2", "Bool"))
 
-graphStore.addNode({
-  id:"addition Node",
-  type: "add",
-  position: {x:0,y:0}
-})
+templateStore.selectTemplate(temp3)
+templateStore.addDecleration(newDecleration("template 3 Declare 1", "Float"))
 
-graphStore.addNode({
-  id:"const Node 1",
-  type: "constNumber",
-  position: {x:0,y:0},
-  state: {
-    value: 5
-  }
-})
+templateStore.selectTemplate(temp2)
+templateStore.addDecleration(newDecleration("template 2 Declare 1", "Intager"))
 
-graphStore.addNode({
-  id:"const Node 2",
-  type: "constNumber",
-  position: {x:0,y:0},
-  state: {
-    value: 7
-  }
-})
+console.log(templateStore.getAllTemplateDeclerations(temp1))
 
-graphStore.setEntryNode("start node of test graph")
-
-graphStore.connect({
-  fromNode: "start node of test graph",
-  fromPort: "next",
-  toNode: "print Node",
-  toPort: "fire"
-})
-
-graphStore.connect({
-  fromNode: "multiply Node",
-  fromPort: "result",
-  toNode: "print Node",
-  toPort: "value"
-})
-
-graphStore.connect({
-  fromNode: "addition Node",
-  fromPort: "result",
-  toNode: "multiply Node",
-  toPort: "a"
-})
-
-graphStore.connect({
-  fromNode: "const Node 1",
-  fromPort: "const",
-  toNode: "addition Node",
-  toPort: "a"
-})
-
-graphStore.connect({
-  fromNode: "const Node 2",
-  fromPort: "const",
-  toNode: "addition Node",
-  toPort: "b"
-})
-
-graphStore.connect({
-  fromNode: "const Node 2",
-  fromPort: "const",
-  toNode: "multiply Node",
-  toPort: "b"
-})
-
-graphStore.runCurrentGraph()
+function createNewTemplate() {
+  templateStore.newTemplate()
+}
 </script>
 
 <template>
   <main>
-    <TheWelcome />
+    <div>hello welcome to Yggdrasil</div>
+    <button v-on:click="createNewTemplate">Create new template</button>
+    <div class="flex flex-col gap-4">
+      <div class="flex-1 outline-1 rounded-xl p-2" v-for="template in templateStore.templates" v-bind:key="template.id">
+        <div>{{template.name}}</div>
+      </div>
+
+    </div>
   </main>
 </template>

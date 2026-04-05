@@ -41,7 +41,7 @@ type FlowPort = {
 
 export type PortDefenition = DataPort | FlowPort
 
-type DataValue = string | number | boolean
+export type DataValue = string | number | boolean
 
 interface NodeDefenition {
   type: string

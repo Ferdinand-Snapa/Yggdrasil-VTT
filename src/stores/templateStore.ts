@@ -37,8 +37,9 @@ export const useTemplateStore = defineStore("TemplateStore", {
   }),
   actions: {
     //Create a new template
-    newTemplate(templateName: string) {
-      const template = newTemplate(templateName)
+    newTemplate(templateName?: string) {
+      const name = templateName ?? `UnNamed Template`
+      const template = newTemplate(name)
       this.templates.push(template)
       return template
     },

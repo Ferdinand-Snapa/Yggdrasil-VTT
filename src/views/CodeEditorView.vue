@@ -6,6 +6,7 @@ import type { Hex, Point } from 'honeycomb-grid'
 import { onMounted, ref, computed, reactive } from 'vue'
 import HexNode from '@/components/HexCodeNode.vue'
 import { NodeRegestry } from '@/nodes/nodeRegestry'
+import CodeEditContextMenu from '@/components/CodeEditContextMenu.vue'
 
 const hexSize: number = 100
 
@@ -240,6 +241,16 @@ function getPortY(
 ): number {
   return record[`${nodeId}:${portId}`]?.y ?? 0
 }
+
+const contextOpenPosition = ref<{ x: number; y: number }>({ x: 0, y: 0 })
+
+const contextMenu = ref()
+
+function openContextMenu(e: PointerEvent) {
+  const mousePos = { x: e.clientX as number, y: e.clientY as number }
+  contextOpenPosition.value = mousePos
+  contextMenu.value.show(e)
+}
 </script>
 
 <style lang="css">
@@ -316,10 +327,20 @@ function getPortY(
           stroke-width="4"
         ></path>
       </svg>
+      <CodeEditContextMenu
+        ref="contextMenu"
+        test="testString props"
+        :new-node="
+          (type: string) => {
+            graphStore.addNodeType(type, contextOpenPosition)
+          }
+        "
+      />
 
       <div
-        class="absolute inset-0 h-screen w-screen transition-[mask-position] duration-75 grad-color z-5"
+        class="absolute inset-0 h-screen w-screen transition-[mask-position] duration-75 grad-color z-5'"
         :style="maskStyle"
+        @contextmenu="openContextMenu"
         id="background"
       ></div>
     </div>

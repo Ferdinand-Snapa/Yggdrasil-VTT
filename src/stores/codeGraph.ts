@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { NodeRegestry } from '@/nodes/nodeRegestry'
 
 type NodeId = string
 type PortId = string
@@ -24,16 +25,16 @@ interface Graph {
   outputPorts?: PortDefenition[]
 }
 //to be expanded
-type DataType = 'number' | 'boolean' | 'string' | 'any'
+export type DataType = 'number' | 'boolean' | 'string' | 'any'
 //data refering value parsing and evaluation
-type DataPort = {
+export type DataPort = {
   id: string
   name: string
   kind: 'data'
   type: DataType
 }
 //flow refering to order of execution
-type FlowPort = {
+export type FlowPort = {
   id: string
   name: string
   kind: 'flow'
@@ -41,9 +42,13 @@ type FlowPort = {
 
 export type PortDefenition = DataPort | FlowPort
 
-type DataValue = string | number | boolean
+export type DataValue = string | number | boolean
 
-interface NodeDefenition {
+export type NodeCategory = 'Math' | 'Flow' | 'Getter' | 'Signals' | 'Functions'
+
+export const NodeCategories: string[] = ['Math', 'Flow', 'Getter', 'Signals', 'Functions']
+
+export interface NodeDefenition {
   type: string
   //defining values in and out
   inputs: PortDefenition[]
@@ -68,6 +73,8 @@ interface NodeDefenition {
   onNodeFinish?: (node: Node, outputs: DataValue) => void
 
   subgraph?: Graph
+
+  category?: NodeCategory
 }
 
 interface PendingConnection {
@@ -76,15 +83,6 @@ interface PendingConnection {
   kind: 'input' | 'output'
   type: string
   portKind: 'data' | 'flow'
-}
-
-//constructors
-function dataPort(id: string, name: string, type: DataType): DataPort {
-  return { id, name, kind: 'data', type }
-}
-
-function flowPort(id: string, name: string): FlowPort {
-  return { id, name, kind: 'flow' }
 }
 
 export interface Node {
@@ -128,117 +126,6 @@ function executionFrame(
 
 function isPureDataNode(def: NodeDefenition): boolean {
   return def.inputs.every((p) => p.kind === 'data') && def.outputs.every((p) => p.kind === 'data')
-}
-
-const nodeRegestry: Record<string, NodeDefenition> = {
-  start: {
-    type: 'start',
-    inputs: [],
-    outputs: [flowPort('next', 'Next')],
-    execute: () => ({
-      next: true,
-    }),
-  },
-
-  constNumber: {
-    type: 'constNumber',
-    inputs: [],
-    outputs: [dataPort('const', 'Const', 'number')],
-    evaluate: (_inputs, state) => ({
-      const: state.value ?? 0,
-    }),
-  },
-
-  compare: {
-    type: 'compare',
-    inputs: [dataPort('a', 'A', 'number'), dataPort('b', 'B', 'number')],
-    outputs: [dataPort('isGreater', 'A > B', 'boolean')],
-    evaluate: ({ a, b }) => ({
-      isGreater: (a ?? 0) > (b ?? 0),
-    }),
-  },
-
-  equal: {
-    type: 'equal',
-    inputs: [dataPort('a', 'A', 'number'), dataPort('b', 'B', 'number')],
-    outputs: [dataPort('isEqual', 'A = B', 'boolean')],
-    evaluate: ({ a, b }) => ({
-      isEqual: (a ?? 0) == (b ?? 0),
-    }),
-  },
-
-  log: {
-    type: 'log',
-    inputs: [flowPort('fire', 'Fire'), dataPort('value', 'Value', 'any')],
-    outputs: [flowPort('next', 'Next')],
-
-    execute: (inputs) => {
-      console.log('LOG NODE:', inputs.value)
-      return {
-        next: true,
-      }
-    },
-  },
-
-  add: {
-    type: 'add',
-    inputs: [dataPort('a', 'A', 'number'), dataPort('b', 'B', 'number')],
-    outputs: [dataPort('result', 'Result', 'number')],
-    evaluate: ({ a, b }) => ({
-      result: ((a as number) ?? 0) + ((b as number) ?? 0),
-    }),
-  },
-
-  mult: {
-    type: 'mult',
-    inputs: [dataPort('a', 'A', 'number'), dataPort('b', 'B', 'number')],
-    outputs: [dataPort('result', 'Result', 'number')],
-    evaluate: ({ a, b }) => ({
-      result: ((a as number) ?? 0) * ((b as number) ?? 0),
-    }),
-  },
-
-  branch: {
-    type: 'branch',
-    inputs: [dataPort('condition', 'Condition', 'boolean')],
-    outputs: [flowPort('true', 'True'), flowPort('false', 'False')],
-    execute: ({ condition }) => ({
-      [condition ? 'true' : 'false']: true,
-    }),
-  },
-
-  loop: {
-    type: 'loop',
-    inputs: [dataPort('count', 'Count', 'number')],
-    outputs: [
-      dataPort('index', 'Index', 'number'),
-      flowPort('loop', 'Loop'),
-      flowPort('done', 'Done'),
-    ],
-
-    execute: (
-      inputs: Record<string, DataValue>,
-      state: Record<string, DataValue>,
-    ): Record<string, DataValue> => {
-      if (state['i'] === undefined) state.i = 0
-
-      if (state['i'] < inputs['count']!) {
-        const current = state.i
-        state['i'] = (state['i'] as number) + 1
-
-        return {
-          index: current,
-          loop: true,
-        }
-      }
-
-      state.i = 0
-
-      return {
-        done: true,
-      }
-    },
-  },
 }
 
 function resolveInputs(
@@ -288,7 +175,7 @@ function getPortValue(
     evaluating.delete(key)
     throw new Error('Failed to fetch node')
   }
-  const def = nodeRegestry[node.type]
+  const def = NodeRegestry[node.type]
 
   if (!def?.evaluate || !isPureDataNode(def)) {
     evaluating.delete(key)
@@ -361,7 +248,7 @@ async function runGraph(
     //get node from queue
     const node = queue.shift()!
     //get functionality from registry
-    const def = nodeRegestry[node.type]!
+    const def = NodeRegestry[node.type]!
 
     //skip pure data node (should not be able to recieve flow)
     if (isPureDataNode(def)) continue
@@ -433,6 +320,14 @@ export const useGraphStore = (graphName: string) => {
       addNode(node: Node) {
         this.graph.nodes[node.id] = node
       },
+      addNodeType(type: string, position?: { x: number; y: number }) {
+        const id: string = crypto.randomUUID()
+        this.addNode({
+          id,
+          type,
+          position: position ?? { x: 0, y: 0 },
+        })
+      },
       startConnection(payLoad: PendingConnection) {
         this.pendingConnection = payLoad
       },
@@ -484,12 +379,12 @@ export const useGraphStore = (graphName: string) => {
           return null
         }
 
-        const outputDef: NodeDefenition = nodeRegestry[output.type]!
+        const outputDef: NodeDefenition = NodeRegestry[output.type]!
         const outputPort: DataPort = outputDef.outputs.find(
           (port) => port.id === output.portId,
         )! as DataPort
 
-        const inputDef: NodeDefenition = nodeRegestry[input.type]!
+        const inputDef: NodeDefenition = NodeRegestry[input.type]!
         const inputPort: DataPort = inputDef.inputs.find(
           (port) => port.id === input.portId,
         )! as DataPort

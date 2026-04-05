@@ -17,6 +17,7 @@ export const NodeRegestry: Record<string, NodeDefenition> = {
     execute: () => ({
       next: true,
     }),
+    category: 'Flow',
   },
 
   constNumber: {
@@ -26,6 +27,7 @@ export const NodeRegestry: Record<string, NodeDefenition> = {
     evaluate: (_inputs, state) => ({
       const: state.value ?? 0,
     }),
+    category: 'Getter',
   },
 
   compare: {
@@ -35,6 +37,7 @@ export const NodeRegestry: Record<string, NodeDefenition> = {
     evaluate: ({ a, b }) => ({
       isGreater: (a ?? 0) > (b ?? 0),
     }),
+    category: 'Math',
   },
 
   equal: {
@@ -44,6 +47,7 @@ export const NodeRegestry: Record<string, NodeDefenition> = {
     evaluate: ({ a, b }) => ({
       isEqual: (a ?? 0) == (b ?? 0),
     }),
+    category: 'Math',
   },
 
   log: {
@@ -57,6 +61,7 @@ export const NodeRegestry: Record<string, NodeDefenition> = {
         next: true,
       }
     },
+    category: 'Functions',
   },
 
   add: {
@@ -66,6 +71,7 @@ export const NodeRegestry: Record<string, NodeDefenition> = {
     evaluate: ({ a, b }) => ({
       result: ((a as number) ?? 0) + ((b as number) ?? 0),
     }),
+    category: 'Math',
   },
 
   mult: {
@@ -75,6 +81,7 @@ export const NodeRegestry: Record<string, NodeDefenition> = {
     evaluate: ({ a, b }) => ({
       result: ((a as number) ?? 0) * ((b as number) ?? 0),
     }),
+    category: 'Math',
   },
 
   branch: {
@@ -84,6 +91,7 @@ export const NodeRegestry: Record<string, NodeDefenition> = {
     execute: ({ condition }) => ({
       [condition ? 'true' : 'false']: true,
     }),
+    category: 'Flow',
   },
 
   loop: {
@@ -117,5 +125,6 @@ export const NodeRegestry: Record<string, NodeDefenition> = {
         done: true,
       }
     },
+    category: 'Flow',
   },
 }
